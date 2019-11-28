@@ -59,23 +59,24 @@ function countFrames() {
        fps = frameCount;
        frameCount = 0;
        elapsedTime -= 1000;
-	   //document.getElementById('fps').innerHTML = 'fps:' + fps;
+	   document.getElementById('fps').innerHTML = 'fps:' + fps;
    }
 }
 
 function successfulMove() {
 	totalMoves += 1;
-	document.getElementById('fps').innerHTML = 'Number of moves: ' + totalMoves;
+	document.getElementById('nMoves').innerHTML = 'Number of moves: ' + totalMoves;
 	if (isCompleted()){
 		drawScene();
 		alert("Puzzle solved in " + totalMoves + " moves!")
+        reset();
 	}
 }
 
 function reset() {
 	resetDisks(numberOfDisks);
 	totalMoves = 0;
-	document.getElementById('fps').innerHTML = 'Number of moves: ' + totalMoves;
+	document.getElementById('nMoves').innerHTML = 'Number of moves: ' + totalMoves;
 	drawScene();
 }
 
@@ -507,11 +508,9 @@ function setEventListeners(){
 	}
 
 	// Button: reset puzzle
-	/*
 	document.getElementById("reset").onclick = function() {
 		reset();
 	}
-	*/
 
 	/*
 	// Button events
