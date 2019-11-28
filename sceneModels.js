@@ -230,27 +230,28 @@ function sphereModel( subdivisionDepth = 2 ) {
 
 var sceneModels = [];
 
-// Model 0 --- Left Rod
+// Model 0 --- Rods Base
 sceneModels.push( new cubeModel() );
-sceneModels[0].tx = -0.6; sceneModels[0].ty = -0.1;
-sceneModels[0].sx = 0.03; sceneModels[0].sy = 0.8; sceneModels[0].sz = 0.03;
+sceneModels[0].tx = 0.0; sceneModels[0].ty = -0.9;
+sceneModels[0].sx = 0.9; sceneModels[0].sy = 0.05; sceneModels[0].sz = 0.5;
 
-// Model 1 --- Middle Rod
+// Model 1 --- Left Rod
 sceneModels.push( new cubeModel() );
-sceneModels[1].tx = 0.0; sceneModels[1].ty = -0.1;
+sceneModels[1].tx = -0.6; sceneModels[1].ty = -0.1;
 sceneModels[1].sx = 0.03; sceneModels[1].sy = 0.8; sceneModels[1].sz = 0.03;
 
-// Model 2 --- Right Rod
+// Model 2 --- Middle Rod
 sceneModels.push( new cubeModel() );
-sceneModels[2].tx = 0.6; sceneModels[2].ty = -0.1;
+sceneModels[2].tx = 0.0; sceneModels[2].ty = -0.1;
 sceneModels[2].sx = 0.03; sceneModels[2].sy = 0.8; sceneModels[2].sz = 0.03;
 
-// Model 3 --- Rods Base
+// Model 3 --- Right Rod
 sceneModels.push( new cubeModel() );
-sceneModels[3].tx = 0.0; sceneModels[3].ty = -0.9;
-sceneModels[3].sx = 0.9; sceneModels[3].sy = 0.05; sceneModels[3].sz = 0.5;
+sceneModels[3].tx = 0.6; sceneModels[3].ty = -0.1;
+sceneModels[3].sx = 0.03; sceneModels[3].sy = 0.8; sceneModels[3].sz = 0.03;
 
 // Other models --- Disks
+/*
 modelDisks();
 
 function modelDisks()
@@ -273,6 +274,7 @@ function modelDisks()
         sceneModels[nModels+d].kSpec = diskColors[d][2];
     }
 }
+*/
 /*
 // plastic material
 diskColors[0] = [[0.3, 0.0, 0.0], [0.6, 0.0, 0.0], [0.8, 0.6, 0.6]];

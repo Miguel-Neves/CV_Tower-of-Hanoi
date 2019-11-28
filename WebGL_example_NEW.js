@@ -1,12 +1,8 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-//  WebGL_example_24_GPU_per_vertex.js 
+//  Tower of Hanoi - WebGL Simulation
 //
-//  Phong Illumination Model on the GPU - Per vertex shading - Several light sources
-//
-//  Reference: E. Angel examples
-//
-//  J. Madeira - November 2017 + November 2018
+//  Based on the materials provided by J. Madeira in Visual Computing classes
 //
 //////////////////////////////////////////////////////////////////////////////
 
@@ -17,79 +13,71 @@
 //
 
 var gl = null; // WebGL context
-
 var shaderProgram = null;
-
 var triangleVertexPositionBuffer = null;
-	
 var triangleVertexNormalBuffer = null;	
 
 // The GLOBAL transformation parameters
-
 var globalAngleYY = 0.0;
-
 var globalTz = 0.0;
 
 // GLOBAL Animation controls
-
 var globalRotationYY_ON = 0;
-
 var globalRotationYY_DIR = 1;
-
 var globalRotationYY_SPEED = 1;
 
 // To allow choosing the way of drawing the model triangles
-
 var primitiveType = null;
  
 // To allow choosing the projection type
-
 var projectionType = 1;
 
-// NEW --- The viewer position
-
-// It has to be updated according to the projection type
-
+// The viewer position
 var pos_Viewer = [ 0.0, 0.0, 0.0, 1.0 ];
 
 // TOWER OF HANOI
-
 var numberOfDisks = 3;
+var selectedDisk = null;
+var totalMoves = 0;
 
 //----------------------------------------------------------------------------
 //
-// NEW - To count the number of frames per second (fps)
+// Auxiliary variables and functions
 //
 
 var elapsedTime = 0;
-
 var frameCount = 0;
-
-var lastfpsTime = new Date().getTime();;
-
+var lastfpsTime = new Date().getTime();
 
 function countFrames() {
-	
    var now = new Date().getTime();
-
    frameCount++;
-   
    elapsedTime += (now - lastfpsTime);
-
    lastfpsTime = now;
 
    if(elapsedTime >= 1000) {
-	   
        fps = frameCount;
-       
        frameCount = 0;
-       
        elapsedTime -= 1000;
-	   
-	   document.getElementById('fps').innerHTML = 'fps:' + fps;
+	   //document.getElementById('fps').innerHTML = 'fps:' + fps;
    }
 }
 
+function successfulMove() {
+	totalMoves += 1;
+	document.getElementById('fps').innerHTML = 'Number of moves: ' + totalMoves;
+	if (isCompleted()){
+		drawScene();
+		alert("Puzzle solved in " + totalMoves + " moves!")
+	}
+}
+
+function reset() {
+	resetDisks(numberOfDisks);
+	totalMoves = 0;
+	document.getElementById('fps').innerHTML = 'Number of moves: ' + totalMoves;
+	drawScene();
+}
 
 //----------------------------------------------------------------------------
 //
@@ -135,7 +123,6 @@ function initBuffers( model ) {
 }
 
 //----------------------------------------------------------------------------
-
 //  Drawing the model
 
 function drawModel( model,
@@ -286,8 +273,8 @@ function drawScene() {
 		// NEW --- The viewer is on (0,0,0)
 		
 		pos_Viewer[0] = pos_Viewer[1] = pos_Viewer[2] = 0.0;
-		
-		pos_Viewer[3] = 1.0;  
+
+		pos_Viewer[3] = 1.0;
 		
 		// TO BE DONE !
 		
@@ -338,25 +325,23 @@ function drawScene() {
 		gl.uniformMatrix4fv(lsmUniform, false, new Float32Array(flatten(lightSourceMatrix)));
 	}
 			
-	// Instantianting all scene models
-	
-	for(var i = 0; i < sceneModels.length-(6-numberOfDisks); i++ )
-	{ 
-		drawModel( sceneModels[i],
-			   mvMatrix,
-	           primitiveType );
-	}
-	           
-	// NEW - Counting the frames
-	
+	// Instantiating the base and rods models
+	for( var i = 0; i < sceneModels.length; i++ )
+		drawModel( sceneModels[i], mvMatrix, primitiveType );
+	// Instantiating the disks models
+	var d;
+	for (d in rods[0].diskStack)
+		drawModel(rods[0].diskStack[d], mvMatrix, primitiveType);
+	for (d in rods[1].diskStack)
+		drawModel(rods[1].diskStack[d], mvMatrix, primitiveType);
+	for (d in rods[2].diskStack)
+		drawModel(rods[2].diskStack[d], mvMatrix, primitiveType);
+
 	countFrames();
 }
 
-//----------------------------------------------------------------------------
-//
-//  NEW --- Animation
-//
 
+//----------------------------------------------------------------------------
 // Animation --- Updating transformation parameters
 
 var lastTime = 0;
@@ -414,30 +399,16 @@ function animate() {
 
 
 //----------------------------------------------------------------------------
-
 // Timer
-
 function tick() {
-	
 	requestAnimFrame(tick);
-	
 	drawScene();
-	
 	animate();
 }
 
 
 //----------------------------------------------------------------------------
-//
-//  User Interaction
-//
-
-function outputInfos(){
-    
-}
-
-//----------------------------------------------------------------------------
-
+// User Interaction - UI Events
 function setEventListeners(){
 
 	// Dropdown list: number of disks
@@ -445,6 +416,7 @@ function setEventListeners(){
 
 	ndSel.onchange = function(){
 		numberOfDisks = ndSel.options[ndSel.selectedIndex].text;
+		createDisks(numberOfDisks);
 	};
 
 	// Dropdown list: projection type
@@ -473,7 +445,73 @@ function setEventListeners(){
 			case 2 : primitiveType = gl.POINTS;
 				break;
 		}
-	});      
+	});
+
+	// Button: select (disk in) left tower
+	document.getElementById("select_lt").onclick = function() {
+		if (selectedDisk == 0)
+			selectedDisk = null;
+		else
+			selectedDisk = 0;
+	}
+	// Button: select (disk in) middle tower
+	document.getElementById("select_mt").onclick = function() {
+		if (selectedDisk == 1)
+			selectedDisk = null;
+		else
+			selectedDisk = 1;
+	}
+	// Button: select (disk in) right tower
+	document.getElementById("select_rt").onclick = function() {
+		if (selectedDisk == 2)
+			selectedDisk = null;
+		else
+			selectedDisk = 2;
+	}
+
+	// Button: drop (disk in) left tower
+	document.getElementById("drop_lt").onclick = function() {
+		if (selectedDisk == null)
+			alert("No disk selected!");
+		else {
+			if (!moveDisk(selectedDisk, 0))
+				alert("Invalid move!");
+			else
+				successfulMove();
+			selectedDisk = null;
+		}
+	}
+	// Button: drop (disk in) middle tower
+	document.getElementById("drop_mt").onclick = function() {
+		if (selectedDisk == null)
+			alert("No disk selected!");
+		else {
+			if (!moveDisk(selectedDisk, 1))
+				alert("Invalid move!");
+			else
+				successfulMove();
+			selectedDisk = null;
+		}
+	}
+	// Button: drop (disk in) right tower
+	document.getElementById("drop_rt").onclick = function() {
+		if (selectedDisk == null)
+			alert("No disk selected!");
+		else {
+			if (!moveDisk(selectedDisk, 2))
+				alert("Invalid move!");
+			else
+				successfulMove();
+			selectedDisk = null;
+		}
+	}
+
+	// Button: reset puzzle
+	/*
+	document.getElementById("reset").onclick = function() {
+		reset();
+	}
+	*/
 
 	/*
 	// Button events
@@ -649,42 +687,29 @@ function setEventListeners(){
 	 */
 }
 
-//----------------------------------------------------------------------------
-//
-// WebGL Initialization
-//
 
+//----------------------------------------------------------------------------
+// WebGL Initialization
 function initWebGL( canvas ) {
 	try {
-		
 		// Create the WebGL context
-		
 		// Some browsers still need "experimental-webgl"
-		
 		gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
 		
-		// DEFAULT: The viewport occupies the whole canvas 
-		
+		// DEFAULT: The viewport occupies the whole canvas
 		// DEFAULT: The viewport background color is WHITE
-		
 		// NEW - Drawing the triangles defining the model
-		
 		primitiveType = gl.TRIANGLES;
 		
 		// DEFAULT: Face culling is DISABLED
-		
 		// Enable FACE CULLING
-		
 		gl.enable( gl.CULL_FACE );
 		
 		// DEFAULT: The BACK FACE is culled!!
-		
 		// The next instruction is not needed...
-		
 		gl.cullFace( gl.BACK );
 		
 		// Enable DEPTH-TEST
-		
 		gl.enable( gl.DEPTH_TEST );
         
 	} catch (e) {
@@ -694,21 +719,12 @@ function initWebGL( canvas ) {
 	}        
 }
 
+
 //----------------------------------------------------------------------------
-
 function runWebGL() {
-	
 	var canvas = document.getElementById("my-canvas");
-	
 	initWebGL( canvas );
-
 	shaderProgram = initShaders( gl );
-	
 	setEventListeners();
-	
-	tick();		// A timer controls the rendering / animation    
-
-	outputInfos();
+	tick();		// A timer controls the rendering / animation
 }
-
-
