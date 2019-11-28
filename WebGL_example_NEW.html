@@ -231,7 +231,7 @@
 		<div style="display: inline-block; vertical-align: top; max-width: 70%">
 			<canvas id="my-canvas" style="border:1px solid #000000;" width="800" height="500"></canvas>
 
-			<table width="90%" align="center">
+			<table width="90%" align="center" id="disk-controllers">
 				<tr>
 					<td>LEFT ROD</td>
 					<td>MIDDLE ROD</td>
@@ -260,8 +260,8 @@
 				</p>
 
 				<p>Number of disks:
-					<select id="nDisks-selection">
-						<option>3</option>
+					<select id="nDisks-selection" autocomplete="off">
+						<option selected>3</option>
 						<option>4</option>
 						<option>5</option>
 						<option>6</option>
@@ -272,6 +272,7 @@
 					Number of moves: 0
 				</p>
 
+				<button class="card bg-info text-white shadow" id="solve">Solve</button>
 				<button class="card bg-danger text-white shadow" id="reset">Reset</button>
 			</div>
 			<div class="card shadow mb-4" style="padding: 10px">

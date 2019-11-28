@@ -414,9 +414,9 @@ function setEventListeners(){
 
 	// Dropdown list: number of disks
 	var ndSel = document.getElementById("nDisks-selection");
-
 	ndSel.onchange = function(){
 		numberOfDisks = ndSel.options[ndSel.selectedIndex].text;
+		reset();
 		createDisks(numberOfDisks);
 	};
 
@@ -505,6 +505,12 @@ function setEventListeners(){
 				successfulMove();
 			selectedDisk = null;
 		}
+	}
+
+	// Button: solve puzzle
+	document.getElementById("solve").onclick = function() {
+		if (totalMoves > 0 && confirm("This option solves the puzzle from an initial state.\nPuzzle will be reset and progress lost.\nContinue?"))
+			reset();
 	}
 
 	// Button: reset puzzle
