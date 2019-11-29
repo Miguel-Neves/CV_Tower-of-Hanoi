@@ -63,21 +63,99 @@ function countFrames() {
    }
 }
 
+// Solves the puzzle using an iterative solution
+function solvePuzzle() {
+	//var start = new Date().getTime();
+	var inc;
+	if (numberOfDisks%2 === 0)
+		inc = 1;
+	else
+		inc = 2;
+
+	var smallestPiecePos = 0;
+	var smallestPieceNextPos;
+	while (!isCompleted()){
+		smallestPieceNextPos = (smallestPiecePos+inc)%3;
+		moveDisk(smallestPiecePos, smallestPieceNextPos);
+		if (!moveDisk(smallestPiecePos, (smallestPieceNextPos+inc)%3))
+			moveDisk((smallestPieceNextPos+inc)%3, smallestPiecePos);
+		smallestPiecePos = smallestPieceNextPos;
+	}
+	//console.log("solved in: " + new Date().getTime()-start + "ms\n");
+}
+// Unused function - solves the puzzle via a different iterative solution
+function solvePuzzle2() {
+	//var start = new Date().getTime();
+	if (numberOfDisks%2 === 0){
+		while (!isCompleted()){
+			if (!moveDisk(0, 1))
+				moveDisk(1, 0);
+			if (!moveDisk(0, 2))
+				moveDisk(2, 0);
+			if (!moveDisk(1, 2))
+				moveDisk(2, 1);
+		}
+	} else {
+		while (!isCompleted()) {
+			if (!moveDisk(0, 2))
+				moveDisk(2, 0);
+			if (!moveDisk(0, 1))
+				moveDisk(1, 0);
+			if (!moveDisk(1, 2))
+				moveDisk(2, 1);
+		}
+	}
+	//console.log("solved in: " + new Date().getTime()-start + "ms\n");
+}
+
+/*
+// Recursive solution to solve the puzzle
+// Idea dropped because of incapability of creating delay in between disk movements, due to Javascript's asynchronous nature
+function solvePuzzle(nDisks, originRod, destinationRod, remainingRod, currentTime) {
+	if (nDisks==1) {
+		delayMove(originRod, destinationRod, currentTime);
+
+		// Failed attempt to add a delay between moves; comparison values above ~10(milliseconds) cause too much recursion
+		//if ( new Date().getTime() - currentTime < 10)
+		//	solvePuzzle(nDisks, originRod, destinationRod, remainingRod, currentTime);
+		//else {
+		//	moveDisk(originRod, destinationRod);
+		//	drawScene();
+		//}
+	}
+	else{
+		solvePuzzle(nDisks-1, originRod, remainingRod, destinationRod, currentTime+300);
+		solvePuzzle(1, originRod, destinationRod, remainingRod, currentTime+300);
+		solvePuzzle(nDisks-1, remainingRod, destinationRod, originRod, currentTime+300);
+	}
+}
+function delayMove(origRod, destRod, cTime) {
+	if ( new Date().getTime() - cTime < 1000)
+		setTimeout(delayMove, 1000, origRod, destRod, cTime);
+	else {
+		moveDisk(origRod, destRod);
+		drawScene();
+	}
+}
+*/
+
+// Resets the puzzle to an initial state
+function reset() {
+	resetDisks(numberOfDisks);
+	totalMoves = 0;
+	document.getElementById('nMoves').innerHTML = 'Number of moves: ' + totalMoves;
+	drawScene();
+}
+
+// Registers a successful move and tests the puzzle's completion
 function successfulMove() {
 	totalMoves += 1;
 	document.getElementById('nMoves').innerHTML = 'Number of moves: ' + totalMoves;
 	if (isCompleted()){
 		drawScene();
 		alert("Puzzle solved in " + totalMoves + " moves!")
-        reset();
+		reset();
 	}
-}
-
-function reset() {
-	resetDisks(numberOfDisks);
-	totalMoves = 0;
-	document.getElementById('nMoves').innerHTML = 'Number of moves: ' + totalMoves;
-	drawScene();
 }
 
 //----------------------------------------------------------------------------
@@ -509,187 +587,20 @@ function setEventListeners(){
 
 	// Button: solve puzzle
 	document.getElementById("solve").onclick = function() {
-		if (totalMoves > 0 && confirm("This option solves the puzzle from an initial state.\nPuzzle will be reset and progress lost.\nContinue?"))
+		if (totalMoves == 0)
+			solvePuzzle();
+			// Unused recursive function to solve the puzzle
+			//solvePuzzle(numberOfDisks, 0, 2, 1, new Date().getTime());
+		else if (confirm("This option solves the puzzle from an initial state.\nPuzzle will be reset and progress lost.\nContinue?")) {
 			reset();
+			solvePuzzle();
+		}
 	}
 
 	// Button: reset puzzle
 	document.getElementById("reset").onclick = function() {
 		reset();
 	}
-
-	/*
-	// Button events
-	
-	document.getElementById("XX-on-off-button").onclick = function(){
-		
-		// Switching on / off
-		
-		// For every model
-		
-		for(var i = 0; i < sceneModels.length; i++ )
-	    {
-			if( sceneModels[i].rotXXOn ) {
-
-				sceneModels[i].rotXXOn = false;
-			}
-			else {
-				sceneModels[i].rotXXOn = true;
-			}	
-		}
-	};
-
-	document.getElementById("XX-direction-button").onclick = function(){
-		
-		// Switching the direction
-		
-		// For every model
-		
-		for(var i = 0; i < sceneModels.length; i++ )
-	    {
-			if( sceneModels[i].rotXXDir == 1 ) {
-
-				sceneModels[i].rotXXDir = -1;
-			}
-			else {
-				sceneModels[i].rotXXDir = 1;
-			}	
-		}
-	};      
-
-	document.getElementById("XX-slower-button").onclick = function(){
-		
-		// For every model
-		
-		for(var i = 0; i < sceneModels.length; i++ )
-	    {
-			sceneModels[i].rotXXSpeed *= 0.75; 
-		}
-	};      
-
-	document.getElementById("XX-faster-button").onclick = function(){
-		
-		// For every model
-		
-		for(var i = 0; i < sceneModels.length; i++ )
-	    {
-			sceneModels[i].rotXXSpeed *= 1.25; 
-		}
-	};      
-
-	document.getElementById("YY-on-off-button").onclick = function(){
-		
-		// Switching on / off
-		
-		// For every model
-		
-		for(var i = 0; i < sceneModels.length; i++ )
-	    {
-			if( sceneModels[i].rotYYOn ) {
-
-				sceneModels[i].rotYYOn = false;
-			}
-			else {
-				sceneModels[i].rotYYOn = true;
-			}	
-		}
-	};
-
-	document.getElementById("YY-direction-button").onclick = function(){
-		
-		// Switching the direction
-		
-		// For every model
-		
-		for(var i = 0; i < sceneModels.length; i++ )
-	    {
-			if( sceneModels[i].rotYYDir == 1 ) {
-
-				sceneModels[i].rotYYDir = -1;
-			}
-			else {
-				sceneModels[i].rotYYDir = 1;
-			}	
-		}
-	};      
-
-	document.getElementById("YY-slower-button").onclick = function(){
-
-		// For every model
-		
-		for(var i = 0; i < sceneModels.length; i++ )
-	    {
-			sceneModels[i].rotYYSpeed *= 0.75; 
-		}
-	};      
-
-	document.getElementById("YY-faster-button").onclick = function(){
-		
-		// For every model
-		
-		for(var i = 0; i < sceneModels.length; i++ )
-	    {
-			sceneModels[i].rotYYSpeed *= 1.25; 
-		}
-	};      
-
-	document.getElementById("ZZ-on-off-button").onclick = function(){
-		
-		// Switching on / off
-		
-		// For every model
-		
-		for(var i = 0; i < sceneModels.length; i++ )
-	    {
-			if( sceneModels[i].rotZZOn ) {
-
-				sceneModels[i].rotZZOn = false;
-			}
-			else {
-				sceneModels[i].rotZZOn = true;
-			}	
-		}
-	};
-
-	document.getElementById("ZZ-direction-button").onclick = function(){
-		
-		// Switching the direction
-		
-		// For every model
-		
-		for(var i = 0; i < sceneModels.length; i++ )
-	    {
-			if( sceneModels[i].rotZZDir == 1 ) {
-
-				sceneModels[i].rotZZDir = -1;
-			}
-			else {
-				sceneModels[i].rotZZDir = 1;
-			}	
-		}
-	};      
-
-	document.getElementById("ZZ-slower-button").onclick = function(){
-		
-		// For every model
-		
-		for(var i = 0; i < sceneModels.length; i++ )
-	    {
-			sceneModels[i].rotZZSpeed *= 0.75; 
-		}
-	};      
-
-	document.getElementById("ZZ-faster-button").onclick = function(){
-		
-		// For every model
-		
-		for(var i = 0; i < sceneModels.length; i++ )
-	    {
-			sceneModels[i].rotZZSpeed *= 1.25; 
-		}
-	};
-
-	 */
 }
 
 

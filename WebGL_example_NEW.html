@@ -256,7 +256,7 @@
 				<h4>WebGL Simulation</h4>
 
 				<p>
-					Move the disks in order to rebuild the pyramid in another rod. You can only move one disk at a time, and never onto a smaller one.
+					Move the disks in order to rebuild the pyramid in another rod. You can only move one disk at a time, from the top of a stack onto an empty rod or a bigger disk.
 				</p>
 
 				<p>Number of disks:
@@ -282,17 +282,17 @@
 			<div class="card shadow mb-4" style="padding: 10px">
 				<h4>Visual options</h4>
 				<p><b>Projection type</b>:
-					<select id="projection-selection">
-						<option>Perspective Projection</option>
+					<select id="projection-selection" autocomplete="off">
+						<option selected>Perspective Projection</option>
 						<option>Orthogonal Projection</option>
 					</select>
 				</p>
 
 				<p><b>Rendering mode</b>:
-					<select id="rendering-mode-selection">
-						<option value="0">Filled Triangles</option>
-						<option value="1">Wireframe</option>
-						<option value="2">Vertices</option>
+					<select id="rendering-mode-selection" autocomplete="off">
+						<option selected>Filled Triangles</option>
+						<option>Wireframe</option>
+						<option>Vertices</option>
 					</select>
 				</p>
 				<p id="fps"> fps: </p>
