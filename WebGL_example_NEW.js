@@ -39,6 +39,7 @@ var pos_Viewer = [ 0.0, 0.0, 0.0, 1.0 ];
 var numberOfDisks = 3;
 var selectedDisk = null;
 var totalMoves = 0;
+var puzzleSolution = [];
 
 //----------------------------------------------------------------------------
 //
@@ -63,14 +64,77 @@ function countFrames() {
    }
 }
 
-// Solves the puzzle using an iterative solution
+// Solves the puzzle using an iterative solution (rebuilds tower on the right rod)
+function getPuzzleSolution2() {
+	//var start = new Date().getTime();
+	puzzleSolution = [];
+	var inc = numberOfDisks%2 === 0 ? 1 : 2;
+
+	var smallestPiecePos = 0;
+	var smallestPieceNextPos;
+	while (puzzleSolution.length < 2**numberOfDisks-1){
+		smallestPieceNextPos = (smallestPiecePos+inc)%3;
+		moveDisk(smallestPiecePos, smallestPieceNextPos);
+		puzzleSolution.push([smallestPiecePos, smallestPieceNextPos]);
+		console.log(smallestPiecePos + ", " + smallestPieceNextPos);
+		if (isMoveValid(smallestPiecePos, (smallestPieceNextPos+inc)%3)) {
+			moveDisk(smallestPiecePos, (smallestPieceNextPos + inc) % 3);
+			puzzleSolution.push([smallestPiecePos, (smallestPieceNextPos + inc) % 3]);
+			console.log(smallestPiecePos + ", " + (smallestPieceNextPos + inc) % 3);
+		}
+		else {
+			moveDisk((smallestPieceNextPos + inc) % 3, smallestPiecePos);
+			puzzleSolution.push([(smallestPieceNextPos + inc) % 3, smallestPiecePos]);
+			console.log((smallestPieceNextPos + inc) % 3 + ", " + smallestPiecePos);
+		}
+		smallestPiecePos = smallestPieceNextPos;
+	}
+	resetDisks(numberOfDisks);
+	//console.log("solved in: " + new Date().getTime()-start + "ms\n");
+	return puzzleSolution;
+}
+// Solves the puzzle using an iterative solution (rebuilds tower on the right rod)
+function getPuzzleSolution() {
+	//var start = new Date().getTime();
+	puzzleSolution = [];
+	var inc = numberOfDisks%2 === 0 ? 1 : 2;
+
+	var smallestPiecePos = 0;
+	var smallestPieceNextPos;
+	while (puzzleSolution.length < 2**numberOfDisks-1){
+		smallestPieceNextPos = (smallestPiecePos+inc)%3;
+		puzzleSolution.push([smallestPiecePos, smallestPieceNextPos]);
+		console.log(smallestPiecePos + ", " + smallestPieceNextPos);
+		if (isMoveValid(smallestPiecePos, (smallestPieceNextPos+inc)%3)) {
+			puzzleSolution.push([smallestPiecePos, (smallestPieceNextPos + inc) % 3]);
+			console.log(smallestPiecePos + ", " + (smallestPieceNextPos + inc) % 3);
+		}
+		else {
+			puzzleSolution.push([(smallestPieceNextPos + inc) % 3, smallestPiecePos]);
+			console.log((smallestPieceNextPos + inc) % 3 + ", " + smallestPiecePos);
+		}
+		smallestPiecePos = smallestPieceNextPos;
+	}
+	//console.log("solved in: " + new Date().getTime()-start + "ms\n");
+	return puzzleSolution;
+}
+
+// Solves the puzzle using an iterative solution (rebuilds tower on the right rod)
+function solvePuzzle0( increment, smallestPiecePosition ) {
+	var smallestPieceNextPos;
+	smallestPieceNextPos = (smallestPiecePosition+increment)%3;
+	moveDisk(smallestPiecePosition, smallestPieceNextPos);
+	if (!moveDisk(smallestPiecePosition, (smallestPieceNextPos+increment)%3))
+		moveDisk((smallestPieceNextPos+increment)%3, smallestPiecePosition);
+
+	if (!isCompleted())
+		setTimeout(solvePuzzle0, 1000, increment, smallestPieceNextPos);
+}
+
+// Solves the puzzle using an iterative solution (rebuilds tower on the right rod)
 function solvePuzzle() {
 	//var start = new Date().getTime();
-	var inc;
-	if (numberOfDisks%2 === 0)
-		inc = 1;
-	else
-		inc = 2;
+	var inc = numberOfDisks%2 === 0 ? 1 : 2;
 
 	var smallestPiecePos = 0;
 	var smallestPieceNextPos;
@@ -84,6 +148,7 @@ function solvePuzzle() {
 	//console.log("solved in: " + new Date().getTime()-start + "ms\n");
 }
 // Unused function - solves the puzzle via a different iterative solution
+// (rebuilds tower on the right rod if number of disks is even, middle rod if odd)
 function solvePuzzle2() {
 	//var start = new Date().getTime();
 	if (numberOfDisks%2 === 0){
@@ -424,56 +489,48 @@ function drawScene() {
 // Animation --- Updating transformation parameters
 
 var lastTime = 0;
+var lastMoveTime = 0;
 
 function animate() {
 	
 	var timeNow = new Date().getTime();
 	
 	if( lastTime != 0 ) {
-		
 		var elapsed = timeNow - lastTime;
 		
 		// Global rotation
-		
-		if( globalRotationYY_ON ) {
-
+		if( globalRotationYY_ON )
 			globalAngleYY += globalRotationYY_DIR * globalRotationYY_SPEED * (90 * elapsed) / 1000.0;
-	    }
 
 		// For every model --- Local rotations
-		
 		for(var i = 0; i < sceneModels.length; i++ )
 	    {
-			if( sceneModels[i].rotXXOn ) {
-
+			if( sceneModels[i].rotXXOn )
 				sceneModels[i].rotAngleXX += sceneModels[i].rotXXDir * sceneModels[i].rotXXSpeed * (90 * elapsed) / 1000.0;
-			}
 
-			if( sceneModels[i].rotYYOn ) {
-
+			if( sceneModels[i].rotYYOn )
 				sceneModels[i].rotAngleYY += sceneModels[i].rotYYDir * sceneModels[i].rotYYSpeed * (90 * elapsed) / 1000.0;
-			}
 
-			if( sceneModels[i].rotZZOn ) {
-
+			if( sceneModels[i].rotZZOn )
 				sceneModels[i].rotAngleZZ += sceneModels[i].rotZZDir * sceneModels[i].rotZZSpeed * (90 * elapsed) / 1000.0;
-			}
 		}
 		
 		// Rotating the light sources
-	
 		for(var i = 0; i < lightSources.length; i++ )
-	    {
 			if( lightSources[i].isRotYYOn() ) {
-
 				var angle = lightSources[i].getRotAngleYY() + lightSources[i].getRotationSpeed() * (90 * elapsed) / 1000.0;
-		
 				lightSources[i].setRotAngleYY( angle );
 			}
-		}
-}
-	
+	}
 	lastTime = timeNow;
+
+	// If asked a puzzle solution was requested, process the solving moves
+	if (puzzleSolution.length > 0)
+		if (new Date().getTime()-lastMoveTime > 1000) {
+			var move = puzzleSolution.shift();
+			moveDisk(move[0], move[1]);
+			lastMoveTime = new Date().getTime();
+		}
 }
 
 
@@ -588,7 +645,8 @@ function setEventListeners(){
 	// Button: solve puzzle
 	document.getElementById("solve").onclick = function() {
 		if (totalMoves == 0)
-			solvePuzzle();
+			getPuzzleSolution2();
+			//solvePuzzle0(numberOfDisks%2 === 0 ? 1 : 2, 0);
 			// Unused recursive function to solve the puzzle
 			//solvePuzzle(numberOfDisks, 0, 2, 1, new Date().getTime());
 		else if (confirm("This option solves the puzzle from an initial state.\nPuzzle will be reset and progress lost.\nContinue?")) {
