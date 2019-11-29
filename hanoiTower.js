@@ -12,7 +12,7 @@ function createDisks( nDisks ) {
     for (var d = 0; d < nDisks; d++) {
         rods[0].diskStack.push(new cubeModel(3));
         rods[0].diskStack[d].tx = rods[0].xPosition;
-        rods[0].diskStack[d].ty = -0.8 + diskHeight * d;
+        rods[0].diskStack[d].ty = diskHeight * d - rodHeight + 0.1;
         rods[0].diskStack[d].sx = 0.3 - 0.03 * d;
         rods[0].diskStack[d].sy = diskHeight/2;
         rods[0].diskStack[d].sz = 0.3 - 0.03 * d;
@@ -24,8 +24,8 @@ function createDisks( nDisks ) {
 
 // Checks if a disk movement is valid
 function isMoveValid( rodOrigin, rodDestination ) {
-    // Checks if there are disks in the origin rod
-    if (rods[rodOrigin].diskStack.length == 0)
+    // Checks if the puzzle is already completed or if there are disks in the origin rod
+    if (isCompleted() || rods[rodOrigin].diskStack.length == 0)
         return false;
     // Checks if there are disks in the destination rod
     if (rods[rodDestination].diskStack.length == 0)
@@ -47,7 +47,7 @@ function moveDisk( rodOrigin, rodDestination ) {
     rods[rodDestination].diskStack[destNDisks-1].tx = rods[rodDestination].xPosition;
     // Update the disk's y position
     if (destNDisks == 1)
-        rods[rodDestination].diskStack[destNDisks-1].ty = -0.8;
+        rods[rodDestination].diskStack[destNDisks-1].ty = -rodHeight + 0.1;
     else
         rods[rodDestination].diskStack[destNDisks-1].ty = rods[rodDestination].diskStack[destNDisks-2].ty + diskHeight;
     return true;
@@ -74,13 +74,23 @@ rods[0] = new Rod(sceneModels[1].tx);
 rods[1] = new Rod(sceneModels[2].tx);
 rods[2] = new Rod(sceneModels[3].tx);
 
-// Array of colors to be randomly selected for the disks
+// Array of colors/materials to be randomly selected for the disks
+// (very bright colors)
 var diskColors = [  [[0.5, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 1.0]],
                     [[0.0, 0.5, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 1.0]],
                     [[0.0, 0.0, 0.5], [0.0, 0.0, 1.0], [1.0, 1.0, 1.0]],
                     [[0.5, 0.5, 0.0], [1.0, 1.0, 0.0], [1.0, 1.0, 1.0]],
                     [[0.5, 0.0, 0.5], [1.0, 0.0, 1.0], [1.0, 1.0, 1.0]],
                     [[0.0, 0.5, 0.5], [0.0, 1.0, 1.0], [1.0, 1.0, 1.0]] ];
+/*
+// (colored plastic material)
+var diskColors = [  [[0.3, 0.0, 0.0], [0.6, 0.0, 0.0], [0.8, 0.6, 0.6]],
+                    [[0.0, 0.3, 0.0], [0.0, 0.6, 0.0], [0.6, 0.8, 0.6]],
+                    [[0.0, 0.0, 0.3], [0.0, 0.0, 0.3], [0.6, 0.6, 0.8]],
+                    [[0.3, 0.3, 0.0], [0.6, 0.6, 0.0], [0.8, 0.8, 0.6]],
+                    [[0.3, 0.0, 0.3], [0.6, 0.0, 0.6], [0.8, 0.6, 0.8]],
+                    [[0.0, 0.3, 0.3], [0.0, 0.6, 0.6], [0.6, 0.8, 0.8]] ];
+*/
 diskColors.sort(function(a, b){return 0.5 - Math.random()});
 
 // Defining the disks thickness

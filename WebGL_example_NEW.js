@@ -35,9 +35,13 @@ var projectionType = 1;
 // The viewer position
 var pos_Viewer = [ 0.0, 0.0, 0.0, 1.0 ];
 
+// Global rotation angles
+var angleXX = 0.0;
+var angleYY = 0.0;
+
 // TOWER OF HANOI
 var numberOfDisks = 3;
-var selectedDisk = null;
+var selectedRod = null;
 var totalMoves = 0;
 var puzzleSolution = [];
 
@@ -64,35 +68,7 @@ function countFrames() {
    }
 }
 
-// Solves the puzzle using an iterative solution (rebuilds tower on the right rod)
-function getPuzzleSolution2() {
-	//var start = new Date().getTime();
-	puzzleSolution = [];
-	var inc = numberOfDisks%2 === 0 ? 1 : 2;
-
-	var smallestPiecePos = 0;
-	var smallestPieceNextPos;
-	while (puzzleSolution.length < 2**numberOfDisks-1){
-		smallestPieceNextPos = (smallestPiecePos+inc)%3;
-		moveDisk(smallestPiecePos, smallestPieceNextPos);
-		puzzleSolution.push([smallestPiecePos, smallestPieceNextPos]);
-		console.log(smallestPiecePos + ", " + smallestPieceNextPos);
-		if (isMoveValid(smallestPiecePos, (smallestPieceNextPos+inc)%3)) {
-			moveDisk(smallestPiecePos, (smallestPieceNextPos + inc) % 3);
-			puzzleSolution.push([smallestPiecePos, (smallestPieceNextPos + inc) % 3]);
-			console.log(smallestPiecePos + ", " + (smallestPieceNextPos + inc) % 3);
-		}
-		else {
-			moveDisk((smallestPieceNextPos + inc) % 3, smallestPiecePos);
-			puzzleSolution.push([(smallestPieceNextPos + inc) % 3, smallestPiecePos]);
-			console.log((smallestPieceNextPos + inc) % 3 + ", " + smallestPiecePos);
-		}
-		smallestPiecePos = smallestPieceNextPos;
-	}
-	resetDisks(numberOfDisks);
-	//console.log("solved in: " + new Date().getTime()-start + "ms\n");
-	return puzzleSolution;
-}
+// Generates an array with the puzzle solving disk movements
 // Solves the puzzle using an iterative solution (rebuilds tower on the right rod)
 function getPuzzleSolution() {
 	//var start = new Date().getTime();
@@ -101,52 +77,21 @@ function getPuzzleSolution() {
 
 	var smallestPiecePos = 0;
 	var smallestPieceNextPos;
-	while (puzzleSolution.length < 2**numberOfDisks-1){
+	while (!isCompleted()){
 		smallestPieceNextPos = (smallestPiecePos+inc)%3;
+		moveDisk(smallestPiecePos, smallestPieceNextPos);
 		puzzleSolution.push([smallestPiecePos, smallestPieceNextPos]);
-		console.log(smallestPiecePos + ", " + smallestPieceNextPos);
-		if (isMoveValid(smallestPiecePos, (smallestPieceNextPos+inc)%3)) {
+		if (moveDisk(smallestPiecePos, (smallestPieceNextPos + inc) % 3))
 			puzzleSolution.push([smallestPiecePos, (smallestPieceNextPos + inc) % 3]);
-			console.log(smallestPiecePos + ", " + (smallestPieceNextPos + inc) % 3);
-		}
-		else {
+		else if (moveDisk((smallestPieceNextPos + inc) % 3, smallestPiecePos))
 			puzzleSolution.push([(smallestPieceNextPos + inc) % 3, smallestPiecePos]);
-			console.log((smallestPieceNextPos + inc) % 3 + ", " + smallestPiecePos);
-		}
 		smallestPiecePos = smallestPieceNextPos;
 	}
+	resetDisks(numberOfDisks);
 	//console.log("solved in: " + new Date().getTime()-start + "ms\n");
 	return puzzleSolution;
 }
 
-// Solves the puzzle using an iterative solution (rebuilds tower on the right rod)
-function solvePuzzle0( increment, smallestPiecePosition ) {
-	var smallestPieceNextPos;
-	smallestPieceNextPos = (smallestPiecePosition+increment)%3;
-	moveDisk(smallestPiecePosition, smallestPieceNextPos);
-	if (!moveDisk(smallestPiecePosition, (smallestPieceNextPos+increment)%3))
-		moveDisk((smallestPieceNextPos+increment)%3, smallestPiecePosition);
-
-	if (!isCompleted())
-		setTimeout(solvePuzzle0, 1000, increment, smallestPieceNextPos);
-}
-
-// Solves the puzzle using an iterative solution (rebuilds tower on the right rod)
-function solvePuzzle() {
-	//var start = new Date().getTime();
-	var inc = numberOfDisks%2 === 0 ? 1 : 2;
-
-	var smallestPiecePos = 0;
-	var smallestPieceNextPos;
-	while (!isCompleted()){
-		smallestPieceNextPos = (smallestPiecePos+inc)%3;
-		moveDisk(smallestPiecePos, smallestPieceNextPos);
-		if (!moveDisk(smallestPiecePos, (smallestPieceNextPos+inc)%3))
-			moveDisk((smallestPieceNextPos+inc)%3, smallestPiecePos);
-		smallestPiecePos = smallestPieceNextPos;
-	}
-	//console.log("solved in: " + new Date().getTime()-start + "ms\n");
-}
 // Unused function - solves the puzzle via a different iterative solution
 // (rebuilds tower on the right rod if number of disks is even, middle rod if odd)
 function solvePuzzle2() {
@@ -207,6 +152,7 @@ function delayMove(origRod, destRod, cTime) {
 // Resets the puzzle to an initial state
 function reset() {
 	resetDisks(numberOfDisks);
+	lastMoveTime = new Date().getTime();
 	totalMoves = 0;
 	document.getElementById('nMoves').innerHTML = 'Number of moves: ' + totalMoves;
 	drawScene();
@@ -229,12 +175,9 @@ function successfulMove() {
 //
 
 //----------------------------------------------------------------------------
-//
-//  Rendering
-//
+// Rendering
 
 // Handling the Vertex Coordinates and the Vertex Normal Vectors
-
 function initBuffers( model ) {	
 	
 	// Vertex Coordinates
@@ -269,99 +212,55 @@ function initBuffers( model ) {
 //----------------------------------------------------------------------------
 //  Drawing the model
 
-function drawModel( model,
-					mvMatrix,
-					primitiveType ) {
+function drawModel( model, mvMatrix, primitiveType ) {
 
-	// The the global model transformation is an input
-	
-	// Concatenate with the particular model transformations
-	
-    // Pay attention to transformation order !!
-    
+	// The transformation order allows a global rotation of all models around the origin point
+	// (there is no rotation on the Z axis)
+	mvMatrix = mult( mvMatrix, translationMatrix( 0.0, 0.0, -0.5 ) );
+	mvMatrix = mult( mvMatrix, rotationYYMatrix( angleYY ) );
+	mvMatrix = mult( mvMatrix, rotationXXMatrix( angleXX ) );
 	mvMatrix = mult( mvMatrix, translationMatrix( model.tx, model.ty, model.tz ) );
-						 
-	mvMatrix = mult( mvMatrix, rotationZZMatrix( model.rotAngleZZ ) );
-	
-	mvMatrix = mult( mvMatrix, rotationYYMatrix( model.rotAngleYY ) );
-	
-	mvMatrix = mult( mvMatrix, rotationXXMatrix( model.rotAngleXX ) );
-	
 	mvMatrix = mult( mvMatrix, scalingMatrix( model.sx, model.sy, model.sz ) );
 						 
 	// Passing the Model View Matrix to apply the current transformation
-	
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-	
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
     
 	// Associating the data to the vertex shader
-	
-	// This can be done in a better way !!
-
 	// Vertex Coordinates and Vertex Normal Vectors
-	
 	initBuffers(model);
 	
 	// Material properties
-	
 	gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_ambient"), 
 		flatten(model.kAmbi) );
-    
     gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_diffuse"),
         flatten(model.kDiff) );
-    
     gl.uniform3fv( gl.getUniformLocation(shaderProgram, "k_specular"),
         flatten(model.kSpec) );
-
 	gl.uniform1f( gl.getUniformLocation(shaderProgram, "shininess"), 
 		model.nPhong );
 
     // Light Sources
-	
 	var numLights = lightSources.length;
-	
 	gl.uniform1i( gl.getUniformLocation(shaderProgram, "numLights"), 
 		numLights );
 
-	//Light Sources
-	
-	for(var i = 0; i < lightSources.length; i++ )
-	{
+	for(var i = 0; i < numLights; i++ ) {
 		gl.uniform1i( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].isOn"),
 			lightSources[i].isOn );
-    
 		gl.uniform4fv( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].position"),
 			flatten(lightSources[i].getPosition()) );
-    
 		gl.uniform3fv( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].intensities"),
 			flatten(lightSources[i].getIntensity()) );
     }
         
-	// Drawing 
-	
+	// Drawing
 	// primitiveType allows drawing as filled triangles / wireframe / vertices
-	
-	if( primitiveType == gl.LINE_LOOP ) {
-		
-		// To simulate wireframe drawing!
-		
-		// No faces are defined! There are no hidden lines!
-		
-		// Taking the vertices 3 by 3 and drawing a LINE_LOOP
-		
-		var i;
-		
-		for( i = 0; i < triangleVertexPositionBuffer.numItems / 3; i++ ) {
-		
-			gl.drawArrays( primitiveType, 3 * i, 3 ); 
-		}
-	}	
-	else {
-				
-		gl.drawArrays(primitiveType, 0, triangleVertexPositionBuffer.numItems); 
-		
-	}	
+	if( primitiveType == gl.LINE_LOOP )
+		for( var j = 0; j < triangleVertexPositionBuffer.numItems / 3; j++ )
+			gl.drawArrays( primitiveType, 3 * j, 3 );
+	else
+		gl.drawArrays(primitiveType, 0, triangleVertexPositionBuffer.numItems);
 }
 
 //----------------------------------------------------------------------------
@@ -516,26 +415,28 @@ function animate() {
 		}
 		
 		// Rotating the light sources
-		for(var i = 0; i < lightSources.length; i++ )
-			if( lightSources[i].isRotYYOn() ) {
-				var angle = lightSources[i].getRotAngleYY() + lightSources[i].getRotationSpeed() * (90 * elapsed) / 1000.0;
-				lightSources[i].setRotAngleYY( angle );
+		for(var j = 0; j < lightSources.length; j++ )
+			if( lightSources[j].isRotYYOn() ) {
+				var angle = lightSources[j].getRotAngleYY() + lightSources[j].getRotationSpeed() * (90 * elapsed) / 1000.0;
+				lightSources[j].setRotAngleYY( angle );
 			}
 	}
 	lastTime = timeNow;
 
-	// If asked a puzzle solution was requested, process the solving moves
+	// If a puzzle solution was requested, process the solving moves
 	if (puzzleSolution.length > 0)
-		if (new Date().getTime()-lastMoveTime > 1000) {
+		if (new Date().getTime()-lastMoveTime > 500) {
 			var move = puzzleSolution.shift();
 			moveDisk(move[0], move[1]);
 			lastMoveTime = new Date().getTime();
+			successfulMove();
 		}
 }
 
 
 //----------------------------------------------------------------------------
 // Timer
+
 function tick() {
 	requestAnimFrame(tick);
 	drawScene();
@@ -544,8 +445,56 @@ function tick() {
 
 
 //----------------------------------------------------------------------------
+// Handling mouse events
+
+var mouseDown = false;
+var lastMouseX = null;
+var lastMouseY = null;
+
+// Registers the mouse button press to enable tracking its movement
+function handleMouseDown(event) {
+	mouseDown = true;
+	lastMouseX = event.clientX;
+	lastMouseY = event.clientY;
+}
+
+// Registers the mouse button release to stop "tracking" its movement
+function handleMouseUp(event) {
+	mouseDown = false;
+}
+
+// If the mouse is being clicked, apply a global rotation to all the models, according to the mouse's movement
+// (to simulate camera rotation control)
+function handleMouseMove(event) {
+	if (!mouseDown)
+		return;
+
+	// Rotation angles proportional to cursor displacement
+	var newX = event.clientX;
+	var newY = event.clientY;
+
+	var deltaX = newX - lastMouseX;
+	angleYY += radians( 10 * deltaX  );
+
+	var deltaY = newY - lastMouseY;
+	angleXX += radians( 10 * deltaY  );
+
+	lastMouseX = newX;
+	lastMouseY = newY;
+}
+
+//----------------------------------------------------------------------------
 // User Interaction - UI Events
-function setEventListeners(){
+
+function setEventListeners( canvas ){
+
+	// Mouse events
+	// Triggers if the mouse button is clicked inside the canvas
+	canvas.onmousedown = handleMouseDown;
+	// Triggers if the mouse button is released (anywhere)
+	document.onmouseup = handleMouseUp;
+	// Triggers if the mouse is moved (anywhere)
+	document.onmousemove = handleMouseMove;
 
 	// Dropdown list: number of disks
 	var ndSel = document.getElementById("nDisks-selection");
@@ -557,23 +506,14 @@ function setEventListeners(){
 
 	// Dropdown list: projection type
 	var projection = document.getElementById("projection-selection");
-	projection.addEventListener("click", function(){
-		var p = projection.selectedIndex;
-
-		switch(p){
-			case 0 : projectionType = 1;
-				break;
-			case 1 : projectionType = 0;
-				break;
-		}  	
-	});      
+	projection.onchange = function(){
+		projectionType = projection.selectedIndex;
+	};
 
 	// Dropdown list: rendering mode
 	var list = document.getElementById("rendering-mode-selection");
-	list.addEventListener("click", function(){
-		var mode = list.selectedIndex;
-				
-		switch(mode){
+	list.onchange = function(){
+		switch(list.selectedIndex){
 			case 0 : primitiveType = gl.TRIANGLES;
 				break;
 			case 1 : primitiveType = gl.LINE_LOOP;
@@ -581,83 +521,91 @@ function setEventListeners(){
 			case 2 : primitiveType = gl.POINTS;
 				break;
 		}
-	});
+	};
 
 	// Button: select (disk in) left tower
 	document.getElementById("select_lt").onclick = function() {
-		if (selectedDisk == 0)
-			selectedDisk = null;
+		if (selectedRod == 0)
+			selectedRod = null;
 		else
-			selectedDisk = 0;
+			selectedRod = 0;
 	}
 	// Button: select (disk in) middle tower
 	document.getElementById("select_mt").onclick = function() {
-		if (selectedDisk == 1)
-			selectedDisk = null;
+		if (selectedRod == 1)
+			selectedRod = null;
 		else
-			selectedDisk = 1;
+			selectedRod = 1;
 	}
 	// Button: select (disk in) right tower
 	document.getElementById("select_rt").onclick = function() {
-		if (selectedDisk == 2)
-			selectedDisk = null;
+		if (selectedRod == 2)
+			selectedRod = null;
 		else
-			selectedDisk = 2;
+			selectedRod = 2;
 	}
 
 	// Button: drop (disk in) left tower
 	document.getElementById("drop_lt").onclick = function() {
-		if (selectedDisk == null)
+		if (selectedRod == null)
 			alert("No disk selected!");
 		else {
-			if (!moveDisk(selectedDisk, 0))
+			if (!moveDisk(selectedRod, 0))
 				alert("Invalid move!");
 			else
 				successfulMove();
-			selectedDisk = null;
+			selectedRod = null;
 		}
 	}
 	// Button: drop (disk in) middle tower
 	document.getElementById("drop_mt").onclick = function() {
-		if (selectedDisk == null)
+		if (selectedRod == null)
 			alert("No disk selected!");
 		else {
-			if (!moveDisk(selectedDisk, 1))
+			if (!moveDisk(selectedRod, 1))
 				alert("Invalid move!");
 			else
 				successfulMove();
-			selectedDisk = null;
+			selectedRod = null;
 		}
 	}
 	// Button: drop (disk in) right tower
 	document.getElementById("drop_rt").onclick = function() {
-		if (selectedDisk == null)
+		if (selectedRod == null)
 			alert("No disk selected!");
 		else {
-			if (!moveDisk(selectedDisk, 2))
+			if (!moveDisk(selectedRod, 2))
 				alert("Invalid move!");
 			else
 				successfulMove();
-			selectedDisk = null;
+			selectedRod = null;
 		}
 	}
 
 	// Button: solve puzzle
 	document.getElementById("solve").onclick = function() {
 		if (totalMoves == 0)
-			getPuzzleSolution2();
-			//solvePuzzle0(numberOfDisks%2 === 0 ? 1 : 2, 0);
+			getPuzzleSolution();
 			// Unused recursive function to solve the puzzle
 			//solvePuzzle(numberOfDisks, 0, 2, 1, new Date().getTime());
 		else if (confirm("This option solves the puzzle from an initial state.\nPuzzle will be reset and progress lost.\nContinue?")) {
 			reset();
-			solvePuzzle();
+			getPuzzleSolution();
 		}
 	}
 
 	// Button: reset puzzle
 	document.getElementById("reset").onclick = function() {
 		reset();
+	}
+
+	// Button: reset visual	options
+	document.getElementById("reset-view").onclick = function() {
+		angleXX = 0.0;
+		angleYY = 0.0;
+		document.getElementById("projection-selection").selectedIndex = projectionType = 1;
+		document.getElementById("rendering-mode-selection").selectedIndex = 0;
+		primitiveType = gl.TRIANGLES;
 	}
 }
 
@@ -699,6 +647,6 @@ function runWebGL() {
 	var canvas = document.getElementById("my-canvas");
 	initWebGL( canvas );
 	shaderProgram = initShaders( gl );
-	setEventListeners();
+	setEventListeners( canvas );
 	tick();		// A timer controls the rendering / animation
 }
