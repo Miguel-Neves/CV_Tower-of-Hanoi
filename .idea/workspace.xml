@@ -3,9 +3,25 @@
   <component name="ChangeListManager">
     <list default="true" id="49896d75-19c1-4cea-979a-857a02d44f68" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/WebGL_example_NEW.html" beforeDir="false" afterPath="$PROJECT_DIR$/WebGL_example_NEW.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/WebGL_example_NEW.js" beforeDir="false" afterPath="$PROJECT_DIR$/WebGL_example_NEW.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hanoiTower.js" beforeDir="false" afterPath="$PROJECT_DIR$/hanoiTower.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebGL_example_NEW.html" beforeDir="false" afterPath="$PROJECT_DIR$/towerOfHanoi.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebGL_example_NEW.js" beforeDir="false" afterPath="$PROJECT_DIR$/towerOfHanoi.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hanoiTower.js" beforeDir="false" afterPath="$PROJECT_DIR$/htLogic.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lightSources.js" beforeDir="false" afterPath="$PROJECT_DIR$/lightSources.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modeloCuboV0.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/modeloCuboV1.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/modeloCuboV2.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/modeloCuboV4.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/modeloEsferaV1.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/modeloEsferaV2.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/modeloEsferaV3.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/modeloEsferaV4.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/modeloEsferaV5.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/modeloTetraedroV0.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/modeloTetraedroV1.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/modeloTetraedroV2.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/modeloTetraedroV4.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/modeloTrianguloIsolado.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/models.js" beforeDir="false" afterPath="$PROJECT_DIR$/models.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sceneModels.js" beforeDir="false" afterPath="$PROJECT_DIR$/sceneModels.js" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -63,7 +79,13 @@
       <workItem from="1574939592649" duration="1171000" />
       <workItem from="1574957673494" duration="16113000" />
       <workItem from="1575028203601" duration="5330000" />
-      <workItem from="1575043246976" duration="17963000" />
+      <workItem from="1575043246976" duration="34016000" />
+      <workItem from="1575114446142" duration="19461000" />
+      <workItem from="1575134839790" duration="252000" />
+      <workItem from="1575135135347" duration="195000" />
+      <workItem from="1575135372698" duration="44000" />
+      <workItem from="1575135522656" duration="25000" />
+      <workItem from="1575135647820" duration="716000" />
     </task>
     <servers />
   </component>

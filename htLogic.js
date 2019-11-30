@@ -1,18 +1,33 @@
+//////////////////////////////////////////////////////////////////////////////
+//
+//  Tower of Hanoi - logic
+//
+//////////////////////////////////////////////////////////////////////////////
+
 //---------- FUNCTIONS ----------//
 
 // Rod constructor
-function Rod( xpos ) {
-    this.xPosition = xpos;
+function Rod( xPos ) {
+    this.xPosition = xPos;
     this.diskStack = [];
 }
+
+// Rod method - returns the y value for the next disk to be inserted
+Rod.prototype.nextDiskHeight = function(){
+    if (this.diskStack.length > 0)
+        return this.diskStack[this.diskStack.length-1].ty + diskHeight;
+    return diskHeight - rodHeight;
+};
 
 // Create nDisks amount of disks, and organize them in the left rod
 function createDisks( nDisks ) {
     rods[0].diskStack = [];
     for (var d = 0; d < nDisks; d++) {
         rods[0].diskStack.push(new cubeModel(3));
+        // In case the user prefers round disks (flattened spheres)
+        //rods[0].diskStack.push(new sphereModel(3));
         rods[0].diskStack[d].tx = rods[0].xPosition;
-        rods[0].diskStack[d].ty = diskHeight * d - rodHeight + 0.1;
+        rods[0].diskStack[d].ty = diskHeight * (d+1) - rodHeight;
         rods[0].diskStack[d].sx = 0.3 - 0.03 * d;
         rods[0].diskStack[d].sy = diskHeight/2;
         rods[0].diskStack[d].sz = 0.3 - 0.03 * d;
@@ -40,16 +55,12 @@ function moveDisk( rodOrigin, rodDestination ) {
     if (!isMoveValid(rodOrigin, rodDestination))
         return false;
 
-    // Move disk between rods
+    // Update the disk's x position (adjusts small coordinate values deviations)
+    rods[rodOrigin].diskStack[rods[rodOrigin].diskStack.length-1].tx = rods[rodDestination].xPosition;
+    // Update the disk's y position (adjusts small coordinate values deviations)
+    rods[rodOrigin].diskStack[rods[rodOrigin].diskStack.length-1].ty = rods[rodDestination].nextDiskHeight();
+    // Move the disk between rods
     rods[rodDestination].diskStack.push(rods[rodOrigin].diskStack.pop());
-    var destNDisks = rods[rodDestination].diskStack.length;
-    // Update the disk's x position
-    rods[rodDestination].diskStack[destNDisks-1].tx = rods[rodDestination].xPosition;
-    // Update the disk's y position
-    if (destNDisks == 1)
-        rods[rodDestination].diskStack[destNDisks-1].ty = -rodHeight + 0.1;
-    else
-        rods[rodDestination].diskStack[destNDisks-1].ty = rods[rodDestination].diskStack[destNDisks-2].ty + diskHeight;
     return true;
 }
 

@@ -2,7 +2,7 @@
 //
 //  For instantiating the scene models.
 //
-//  J. Madeira - November 2018
+//  Based on a similar file provided by J. MadeiraJ. Madeira in Visual Computing classes
 //
 //////////////////////////////////////////////////////////////////////////////
 
@@ -52,31 +52,23 @@ function emptyModelFeatures() {
 	this.nPhong = 100;
 }
 
+// (unused)
 function singleTriangleModel( ) {
 	
 	var triangle = new emptyModelFeatures();
-	
 	// Default model has just ONE TRIANGLE
 
 	triangle.vertices = [
-
 		// FRONTAL TRIANGLE
-		 
 		-0.5, -0.5,  0.5,
-		 
 		 0.5, -0.5,  0.5,
-		 
 		 0.5,  0.5,  0.5,
 	];
 
 	triangle.normals = [
-
 		// FRONTAL TRIANGLE
-		 
 		 0.0,  0.0,  1.0,
-		 
 		 0.0,  0.0,  1.0,
-		 
 		 0.0,  0.0,  1.0,
 	];
 
@@ -88,7 +80,6 @@ function simpleCubeModel( ) {
 	var cube = new emptyModelFeatures();
 	
 	cube.vertices = [
-
 		-1.000000, -1.000000,  1.000000,
 		 1.000000,  1.000000,  1.000000,
 		-1.000000,  1.000000,  1.000000,
@@ -133,22 +124,18 @@ function simpleCubeModel( ) {
 }
 
 function cubeModel( subdivisionDepth = 0 ) {
-	
 	var cube = new simpleCubeModel();
-	
 	midPointRefinement( cube.vertices, subdivisionDepth );
-	
 	computeVertexNormals( cube.vertices, cube.normals );
-	
 	return cube;
 }
 
+// (unused)
 function simpleTetrahedronModel( ) {
 	
 	var tetra = new emptyModelFeatures();
 	
 	tetra.vertices = [
-
 		-1.000000,  0.000000, -0.707000, 
          0.000000,  1.000000,  0.707000, 
          1.000000,  0.000000, -0.707000, 
@@ -168,27 +155,20 @@ function simpleTetrahedronModel( ) {
 	return tetra;
 }
 
+// (unused)
 function tetrahedronModel( subdivisionDepth = 0 ) {
-	
 	var tetra = new simpleTetrahedronModel();
-	
 	midPointRefinement( tetra.vertices, subdivisionDepth );
-	
 	computeVertexNormals( tetra.vertices, tetra.normals );
-	
 	return tetra;
 }
 
+// (unused, but can easily be used in place of the cubeModel() to create round disks - htLogic:28)
 function sphereModel( subdivisionDepth = 2 ) {
-	
 	var sphere = new simpleCubeModel();
-	
 	midPointRefinement( sphere.vertices, subdivisionDepth );
-	
-	moveToSphericalSurface( sphere.vertices )
-	
+	moveToSphericalSurface( sphere.vertices );
 	computeVertexNormals( sphere.vertices, sphere.normals );
-	
 	return sphere;
 }
 
@@ -219,4 +199,4 @@ sceneModels.push( new cubeModel() );
 sceneModels[3].tx = 0.6; sceneModels[3].ty = 0.0;
 sceneModels[3].sx = 0.03; sceneModels[3].sy = rodHeight; sceneModels[3].sz = 0.03;
 
-// Other models - Disks -> created in the hanoiTower.js file
+// Other models - Disks -> created in the htLogic.js file

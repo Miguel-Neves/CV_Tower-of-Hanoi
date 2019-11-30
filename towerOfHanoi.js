@@ -41,9 +41,11 @@ var angleYY = 0.0;
 
 // TOWER OF HANOI
 var numberOfDisks = 3;
-var selectedRod = null;
 var totalMoves = 0;
 var puzzleSolution = [];
+var selectedRod = null;
+var moveToRod = null;
+var deselectHeight = null;
 
 //----------------------------------------------------------------------------
 //
@@ -152,9 +154,12 @@ function delayMove(origRod, destRod, cTime) {
 // Resets the puzzle to an initial state
 function reset() {
 	resetDisks(numberOfDisks);
+	puzzleSolution = [];
+	selectedRod = moveToRod = deselectHeight = null;
 	lastMoveTime = new Date().getTime();
 	totalMoves = 0;
 	document.getElementById('nMoves').innerHTML = 'Number of moves: ' + totalMoves;
+	toggleInterface(true);
 	drawScene();
 }
 
@@ -163,10 +168,24 @@ function successfulMove() {
 	totalMoves += 1;
 	document.getElementById('nMoves').innerHTML = 'Number of moves: ' + totalMoves;
 	if (isCompleted()){
+		toggleInterface(true);
 		drawScene();
-		alert("Puzzle solved in " + totalMoves + " moves!")
+		alert("Puzzle solved in " + totalMoves + " moves!");
 		reset();
 	}
+}
+
+// Enables/disables the interface's buttons, to prevent conflicts between elongated actions
+function toggleInterface( onoff ) {
+	document.getElementById("select_lt").disabled = !onoff;
+	document.getElementById("select_mt").disabled = !onoff;
+	document.getElementById("select_rt").disabled = !onoff;
+	document.getElementById("place_lt").disabled = !onoff;
+	document.getElementById("place_mt").disabled = !onoff;
+	document.getElementById("place_rt").disabled = !onoff;
+	document.getElementById("solve").disabled = !onoff;
+	//document.getElementById("reset").disabled = !onoff;
+	document.getElementById("nDisks-selection").disabled = !onoff;
 }
 
 //----------------------------------------------------------------------------
@@ -181,7 +200,6 @@ function successfulMove() {
 function initBuffers( model ) {	
 	
 	// Vertex Coordinates
-		
 	triangleVertexPositionBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.vertices), gl.STATIC_DRAW);
@@ -189,13 +207,11 @@ function initBuffers( model ) {
 	triangleVertexPositionBuffer.numItems =  model.vertices.length / 3;			
 
 	// Associating to the vertex shader
-	
 	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
 			triangleVertexPositionBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
 	
 	// Vertex Normal Vectors
-		
 	triangleVertexNormalBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexNormalBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( model.normals), gl.STATIC_DRAW);
@@ -203,7 +219,6 @@ function initBuffers( model ) {
 	triangleVertexNormalBuffer.numItems = model.normals.length / 3;			
 
 	// Associating to the vertex shader
-	
 	gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, 
 			triangleVertexNormalBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);	
@@ -242,10 +257,9 @@ function drawModel( model, mvMatrix, primitiveType ) {
 
     // Light Sources
 	var numLights = lightSources.length;
-	gl.uniform1i( gl.getUniformLocation(shaderProgram, "numLights"), 
-		numLights );
+	gl.uniform1i( gl.getUniformLocation(shaderProgram, "numLights"), numLights );
 
-	for(var i = 0; i < numLights; i++ ) {
+	for (var i = 0; i < numLights; i++ ) {
 		gl.uniform1i( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].isOn"),
 			lightSources[i].isOn );
 		gl.uniform4fv( gl.getUniformLocation(shaderProgram, "allLights[" + String(i) + "].position"),
@@ -270,104 +284,61 @@ function drawModel( model, mvMatrix, primitiveType ) {
 function drawScene() {
 	
 	var pMatrix;
-	
 	var mvMatrix = mat4();
 	
 	// Clearing the frame-buffer and the depth-buffer
-	
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
 	// Computing the Projection Matrix
-	
 	if( projectionType == 0 ) {
-		
 		// For now, the default orthogonal view volume
-		
 		pMatrix = ortho( -1.0, 1.0, -1.0, 1.0, -1.0, 1.0 );
 		
-		// Global transformation !!
-		
+		// Global transformation
 		globalTz = 0.0;
 		
-		// NEW --- The viewer is on the ZZ axis at an indefinite distance
-		
+		// The viewer is on the ZZ axis at an indefinite distance
 		pos_Viewer[0] = pos_Viewer[1] = pos_Viewer[3] = 0.0;
-		
-		pos_Viewer[2] = 1.0;  
-		
-		// TO BE DONE !
-		
-		// Allow the user to control the size of the view volume
+		pos_Viewer[2] = 1.0;
 	}
-	else {	
-
+	else {
 		// A standard view volume.
-		
 		// Viewer is at (0,0,0)
-		
 		// Ensure that the model is "inside" the view volume
-		
 		pMatrix = perspective( 45, 1, 0.05, 15 );
 		
-		// Global transformation !!
-		
+		// Global transformation
 		globalTz = -2.5;
 
-		// NEW --- The viewer is on (0,0,0)
-		
+		// The viewer is on (0,0,0)
 		pos_Viewer[0] = pos_Viewer[1] = pos_Viewer[2] = 0.0;
-
 		pos_Viewer[3] = 1.0;
-		
-		// TO BE DONE !
-		
-		// Allow the user to control the size of the view volume
 	}
 	
 	// Passing the Projection Matrix to apply the current projection
-	
 	var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
-	
 	gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
 	
-	// NEW --- Passing the viewer position to the vertex shader
-	
-	gl.uniform4fv( gl.getUniformLocation(shaderProgram, "viewerPosition"),
-        flatten(pos_Viewer) );
+	// Passing the viewer position to the vertex shader
+	gl.uniform4fv( gl.getUniformLocation(shaderProgram, "viewerPosition"), flatten(pos_Viewer) );
 	
 	// GLOBAL TRANSFORMATION FOR THE WHOLE SCENE
-	
 	mvMatrix = translationMatrix( 0, 0, globalTz );
 	
-	// NEW - Updating the position of the light sources, if required
-	
-	// FOR EACH LIGHT SOURCE
-	    
-	for(var i = 0; i < lightSources.length; i++ )
-	{
-		// Animating the light source, if defined
-		    
+	// Updating the position of the light sources (unused)
+	for(var i = 0; i < lightSources.length; i++ ){
+		// Animating the light source
 		var lightSourceMatrix = mat4();
 
-		if( !lightSources[i].isOff() ) {
-				
-			// COMPLETE THE CODE FOR THE OTHER ROTATION AXES
-
-			if( lightSources[i].isRotYYOn() ) 
-			{
-				lightSourceMatrix = mult( 
-						lightSourceMatrix, 
-						rotationYYMatrix( lightSources[i].getRotAngleYY() ) );
-			}
-		}
+		if( !lightSources[i].isOff() )
+			if( lightSources[i].isRotYYOn() )
+				lightSourceMatrix = mult(lightSourceMatrix, rotationYYMatrix(lightSources[i].getRotAngleYY()));
 		
-		// NEW Passing the Light Souree Matrix to apply
-	
+		// Passing the Light Source Matrix to apply
 		var lsmUniform = gl.getUniformLocation(shaderProgram, "allLights["+ String(i) + "].lightSourceMatrix");
-	
 		gl.uniformMatrix4fv(lsmUniform, false, new Float32Array(flatten(lightSourceMatrix)));
 	}
-			
+
 	// Instantiating the base and rods models
 	for( var i = 0; i < sceneModels.length; i++ )
 		drawModel( sceneModels[i], mvMatrix, primitiveType );
@@ -387,49 +358,64 @@ function drawScene() {
 //----------------------------------------------------------------------------
 // Animation --- Updating transformation parameters
 
-var lastTime = 0;
 var lastMoveTime = 0;
 
 function animate() {
-	
-	var timeNow = new Date().getTime();
-	
-	if( lastTime != 0 ) {
-		var elapsed = timeNow - lastTime;
-		
-		// Global rotation
-		if( globalRotationYY_ON )
-			globalAngleYY += globalRotationYY_DIR * globalRotationYY_SPEED * (90 * elapsed) / 1000.0;
 
-		// For every model --- Local rotations
-		for(var i = 0; i < sceneModels.length; i++ )
-	    {
-			if( sceneModels[i].rotXXOn )
-				sceneModels[i].rotAngleXX += sceneModels[i].rotXXDir * sceneModels[i].rotXXSpeed * (90 * elapsed) / 1000.0;
+	// If a disk is selected, animate its movement
+	if (selectedRod != null) {
+		var dIndex = rods[selectedRod].diskStack.length - 1;
 
-			if( sceneModels[i].rotYYOn )
-				sceneModels[i].rotAngleYY += sceneModels[i].rotYYDir * sceneModels[i].rotYYSpeed * (90 * elapsed) / 1000.0;
-
-			if( sceneModels[i].rotZZOn )
-				sceneModels[i].rotAngleZZ += sceneModels[i].rotZZDir * sceneModels[i].rotZZSpeed * (90 * elapsed) / 1000.0;
-		}
-		
-		// Rotating the light sources
-		for(var j = 0; j < lightSources.length; j++ )
-			if( lightSources[j].isRotYYOn() ) {
-				var angle = lightSources[j].getRotAngleYY() + lightSources[j].getRotationSpeed() * (90 * elapsed) / 1000.0;
-				lightSources[j].setRotAngleYY( angle );
+		// disk was deselected (needs to move back down)
+		if (moveToRod != null && selectedRod == moveToRod) {
+			// disk is above its original position (needs to move back down)
+			if (Math.abs(rods[selectedRod].diskStack[dIndex].ty - deselectHeight) > 0.01)
+				rods[selectedRod].diskStack[dIndex].ty -= 0.1;
+			// disk is back in its original position
+			else {
+				selectedRod = moveToRod = deselectHeight = null;
+				toggleInterface(true);
 			}
+		}
+		// disk is on the origin rod (needs to move up)
+		else if (rods[selectedRod].diskStack[dIndex].tx == rods[selectedRod].xPosition && rods[selectedRod].diskStack[dIndex].ty < 0.8)
+			rods[selectedRod].diskStack[dIndex].ty += 0.1;
+		// disk is above the origin rod, and no destination has been chosen yet
+		else if (moveToRod == null)
+			toggleInterface(true);
+		// disk is at the destination rod
+		// (cannot use ==0 as condition, because the floating-point problem prevents arithmetic operations' results to reach some exact decimals, such as 0.0)
+		// else if (rods[selectedRod].diskStack[dIndex].tx == rods[moveToRod].xPosition) {
+		else if (Math.abs(rods[selectedRod].diskStack[dIndex].tx - rods[moveToRod].xPosition) < 0.01) {
+			// disk is above its final position (needs to go down)
+			// (cannot use disk height > destination height, due to the same floating-point problem)
+			// if (rods[selectedRod].diskStack[dIndex].ty > rods[moveToRod].nextDiskHeight())
+			if (rods[selectedRod].diskStack[dIndex].ty - rods[moveToRod].nextDiskHeight() > 0.01)
+				rods[selectedRod].diskStack[dIndex].ty -= 0.1;
+			// disk is in its final position
+			else {
+				moveDisk(selectedRod, moveToRod);
+				selectedRod = moveToRod = null;
+				successfulMove();
+				toggleInterface(true);
+			}
+		} // disk is to the left of the destination rod (needs to move right)
+		else if (rods[selectedRod].diskStack[dIndex].tx < rods[moveToRod].xPosition)
+			rods[selectedRod].diskStack[dIndex].tx += 0.1;
+		// disk is to the right of the destination rod (needs to move left)
+		else if (rods[selectedRod].diskStack[dIndex].tx > rods[moveToRod].xPosition)
+			rods[selectedRod].diskStack[dIndex].tx -= 0.1;
 	}
-	lastTime = timeNow;
 
-	// If a puzzle solution was requested, process the solving moves
+	// If a puzzle solution was requested, process the solving movements
 	if (puzzleSolution.length > 0)
-		if (new Date().getTime()-lastMoveTime > 500) {
-			var move = puzzleSolution.shift();
-			moveDisk(move[0], move[1]);
+		toggleInterface(false);
+		// Each movement is processed in 1000ms intervals, to allow the animation to play
+		if (new Date().getTime()-lastMoveTime > 1000) {
+			var movement = puzzleSolution.shift();
+			selectedRod = movement[0];
+			moveToRod = movement[1];
 			lastMoveTime = new Date().getTime();
-			successfulMove();
 		}
 }
 
@@ -523,81 +509,124 @@ function setEventListeners( canvas ){
 		}
 	};
 
-	// Button: select (disk in) left tower
+	// Button: select (top disk on) left tower
 	document.getElementById("select_lt").onclick = function() {
-		if (selectedRod == 0)
-			selectedRod = null;
-		else
-			selectedRod = 0;
-	}
-	// Button: select (disk in) middle tower
-	document.getElementById("select_mt").onclick = function() {
-		if (selectedRod == 1)
-			selectedRod = null;
-		else
-			selectedRod = 1;
-	}
-	// Button: select (disk in) right tower
-	document.getElementById("select_rt").onclick = function() {
-		if (selectedRod == 2)
-			selectedRod = null;
-		else
-			selectedRod = 2;
-	}
+		if (selectedRod == null) {
+			if (rods[0].diskStack.length > 0) {
+				deselectHeight = rods[0].diskStack[rods[0].diskStack.length - 1].ty;
+				selectedRod = 0;
+				toggleInterface(false);
+			} else {
+				selectedRod = null;
+				alert("There are no disks on the left rod!");
+			}
+		} else if (selectedRod == 0) {
+			moveToRod = 0;
+			toggleInterface(false);
+		} else {
+			moveToRod = selectedRod;
+			toggleInterface(false);
+		}
 
-	// Button: drop (disk in) left tower
-	document.getElementById("drop_lt").onclick = function() {
+	};
+	// Button: select (top disk on) middle tower
+	document.getElementById("select_mt").onclick = function() {
+		if (selectedRod == null) {
+			if (rods[1].diskStack.length > 0) {
+				deselectHeight = rods[1].diskStack[rods[1].diskStack.length - 1].ty;
+				selectedRod = 1;
+				toggleInterface(false);
+			} else {
+				selectedRod = null;
+				alert("There are no disks on the middle rod!");
+			}
+		} else if (selectedRod == 1){
+			moveToRod = 1;
+			toggleInterface(false);
+		} else {
+			moveToRod = selectedRod;
+			toggleInterface(false);
+		}
+	};
+	// Button: select (top disk on) right tower
+	document.getElementById("select_rt").onclick = function() {
+		if (selectedRod == null) {
+			if (rods[2].diskStack.length > 0) {
+				deselectHeight = rods[2].diskStack[rods[2].diskStack.length - 1].ty;
+				selectedRod = 2;
+				toggleInterface(false);
+			} else {
+				selectedRod = null;
+				alert("There are no disks on the right rod!");
+			}
+		} else if (selectedRod == 2){
+			moveToRod = 2;
+			toggleInterface(false);
+		} else {
+			moveToRod = selectedRod;
+			toggleInterface(false);
+		}
+	};
+
+	// Button: place (selected disk on) left tower
+	document.getElementById("place_lt").onclick = function() {
 		if (selectedRod == null)
 			alert("No disk selected!");
 		else {
-			if (!moveDisk(selectedRod, 0))
+			if (!isMoveValid(selectedRod, 0))
 				alert("Invalid move!");
-			else
-				successfulMove();
-			selectedRod = null;
+			else {
+				moveToRod = 0;
+				toggleInterface(false);
+			}
 		}
-	}
-	// Button: drop (disk in) middle tower
-	document.getElementById("drop_mt").onclick = function() {
+	};
+	// Button: place (selected disk on) middle tower
+	document.getElementById("place_mt").onclick = function() {
 		if (selectedRod == null)
 			alert("No disk selected!");
 		else {
-			if (!moveDisk(selectedRod, 1))
+			if (!isMoveValid(selectedRod, 1))
 				alert("Invalid move!");
-			else
-				successfulMove();
-			selectedRod = null;
+			else {
+				moveToRod = 1;
+				toggleInterface(false);
+			}
 		}
-	}
-	// Button: drop (disk in) right tower
-	document.getElementById("drop_rt").onclick = function() {
+	};
+	// Button: place (selected disk on) right tower
+	document.getElementById("place_rt").onclick = function() {
 		if (selectedRod == null)
 			alert("No disk selected!");
 		else {
-			if (!moveDisk(selectedRod, 2))
+			if (!isMoveValid(selectedRod, 2))
 				alert("Invalid move!");
-			else
-				successfulMove();
-			selectedRod = null;
+			else {
+				moveToRod = 2;
+				toggleInterface(false);
+			}
 		}
-	}
+	};
 
 	// Button: solve puzzle
 	document.getElementById("solve").onclick = function() {
-		if (totalMoves == 0)
+		if (totalMoves == 0) {
+			toggleInterface(false);
 			getPuzzleSolution();
 			// Unused recursive function to solve the puzzle
 			//solvePuzzle(numberOfDisks, 0, 2, 1, new Date().getTime());
+		}
 		else if (confirm("This option solves the puzzle from an initial state.\nPuzzle will be reset and progress lost.\nContinue?")) {
 			reset();
+			toggleInterface(false);
 			getPuzzleSolution();
 		}
-	}
+	};
 
 	// Button: reset puzzle
 	document.getElementById("reset").onclick = function() {
 		reset();
-	}
+	};
 
 	// Button: reset visual	options
 	document.getElementById("reset-view").onclick = function() {
@@ -606,7 +635,7 @@ function setEventListeners( canvas ){
 		document.getElementById("projection-selection").selectedIndex = projectionType = 1;
 		document.getElementById("rendering-mode-selection").selectedIndex = 0;
 		primitiveType = gl.TRIANGLES;
-	}
+	};
 }
 
 
@@ -615,20 +644,20 @@ function setEventListeners( canvas ){
 function initWebGL( canvas ) {
 	try {
 		// Create the WebGL context
-		// Some browsers still need "experimental-webgl"
+		// (some browsers still need "experimental-webgl")
 		gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
 		
 		// DEFAULT: The viewport occupies the whole canvas
 		// DEFAULT: The viewport background color is WHITE
-		// NEW - Drawing the triangles defining the model
+		// Drawing the triangles defining the model
 		primitiveType = gl.TRIANGLES;
 		
 		// DEFAULT: Face culling is DISABLED
 		// Enable FACE CULLING
 		gl.enable( gl.CULL_FACE );
 		
-		// DEFAULT: The BACK FACE is culled!!
-		// The next instruction is not needed...
+		// DEFAULT: The BACK FACE is culled
+		// (unnecessary instruction)
 		gl.cullFace( gl.BACK );
 		
 		// Enable DEPTH-TEST
@@ -636,9 +665,8 @@ function initWebGL( canvas ) {
         
 	} catch (e) {
 	}
-	if (!gl) {
-		alert("Could not initialise WebGL, sorry! :-(");
-	}        
+	if (!gl)
+		alert("Could not initialize WebGL, sorry! :-(");
 }
 
 
@@ -648,5 +676,5 @@ function runWebGL() {
 	initWebGL( canvas );
 	shaderProgram = initShaders( gl );
 	setEventListeners( canvas );
-	tick();		// A timer controls the rendering / animation
+	tick();	// A timer controls the rendering / animation
 }
